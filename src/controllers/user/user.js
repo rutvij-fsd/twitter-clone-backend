@@ -21,6 +21,7 @@ module.exports = {
     "retweetsCount",
     "likesCount",
     "createdAt",
+    "dateCreated"
   ],
   addUser: async (req, res) => {
     // Joi validation checks
@@ -155,8 +156,23 @@ module.exports = {
       2. Add tweetIds of retweets and likes in 2 Sets
       3. Map over all tweets to add selfRetweeted -> true and selfLiked -> true
     */
+   
+   const limitAsNumber = Number.parseInt(req.query.limit);
+   const pageAsNumber = Number.parseInt(req.query.page);
+
+   let page =0;
+   if(!Number.isNaN(pageAsNumber) && pageAsNumber >0){
+    page = pageAsNumber;
+   }
+   let limit =10;
+   if(!Number.isNaN(limitAsNumber) && limitAsNumber >0 && limitAsNumber <10000){
+    limit = limitAsNumber;
+   }
+
+
+
     Promise.all([
-      getUserTweets(req.query.userId, module.exports.tweetAttributes),
+      getUserTweets(req.query.userId, module.exports.tweetAttributes,limit,page*limit),
       getUserRetweets(req.query.userId, module.exports.tweetAttributes),
       getMyLikes(req.query.myId),
       getMyRetweets(req.query.myId),
@@ -169,7 +185,8 @@ module.exports = {
         ...retweet,
         isRetweet: true,
       }));
-      let tweets = values[0].concat(retweets);
+      let tweets = values[0].rows.concat(retweets);
+      let count = values[0].count;
       const uniqueSet = new Set();
       tweets = tweets.filter((tweet) => {
         if (uniqueSet.has(tweet["Tweets.id"])) return false;
@@ -187,7 +204,7 @@ module.exports = {
         if (likeSet.has(tweet["Tweets.id"])) deepCopy.selfLiked = true;
         return deepCopy;
       });
-      res.status(200).json({ tweets });
+      res.status(200).json({ tweets,count  });
     });
   },
   getLikesByUserId: async (req, res) => {
@@ -237,7 +254,7 @@ module.exports = {
         ...retweet,
         isRetweet: true,
       }));
-      let tweets = values[0].concat(retweets);
+      let tweets = values[0].rows.concat(retweets);
       const uniqueSet = new Set();
       tweets = tweets.filter((tweet) => {
         if (uniqueSet.has(tweet["Tweets.id"])) return false;

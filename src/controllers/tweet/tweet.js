@@ -11,13 +11,15 @@ module.exports = {
       return res.status(400).json({ errors: validation.error.details });
 
     upload(req.file, req.body.resource_type).then(async (media) => {
-      console.log(media)
+      console.log(media);
       try {
         const tweet = await Tweet.create({
           userId: req.body.userId,
           text: req.body.text,
           media: media.secure_url,
+          dateCreated: req.body.dateCreated,
         });
+        console.log("tweet", tweet);
         return res.status(200).json({ tweet });
       } catch (err) {
         return res.status(400).json({ errors: err });
@@ -34,6 +36,7 @@ module.exports = {
       let tweet = { ...values[0] };
       tweet = { ...tweet, selfLiked: values[1] ? true : false };
       tweet = { ...tweet, selfRetweeted: values[2] ? true : false };
+      
       return res.status(200).json({ tweet });
     });
   },

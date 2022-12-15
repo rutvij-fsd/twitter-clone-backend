@@ -17,6 +17,7 @@ module.exports = {
     const schema = Joi.object({
       userId: Joi.string().required(),
       text: Joi.string().required(),
+      dateCreated: Joi.string().optional(),
       media: Joi.object().optional(),
       resource_type: Joi.string().optional(),
     }).options({ abortEarly: false });

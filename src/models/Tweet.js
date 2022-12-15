@@ -15,6 +15,9 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    dateCreated: {
+      type: DataTypes.STRING,
+    },
     media: {
       type: DataTypes.STRING,
     },

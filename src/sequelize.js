@@ -16,7 +16,7 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
 });
 (async () => {
   try {
-    const res = await sequelize.sync();
+    const res = await sequelize.sync({ force: false });
   } catch (err) {
     console.log(err);
   }

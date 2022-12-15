@@ -40,8 +40,8 @@ module.exports = {
     });
     return tweets;
   },
-  getUserTweets: async (id, tweetAttributes) => {
-    let tweets = await User.findAll({
+  getUserTweets: async (id, tweetAttributes, limit, offset) => {
+    let tweets = await User.findAndCountAll({
       attributes: ["firstname", "lastname", "username", "avatar"],
       include: {
         model: Tweet,
@@ -50,8 +50,14 @@ module.exports = {
         where: {
           userId: id,
         },
+        order: [
+          ["dateCreated", "DESC"],
+        ],
       },
       raw: true,
+      offset: offset,
+      limit: limit,
+      subQuery: false,
     });
     return tweets;
   },
@@ -72,5 +78,5 @@ module.exports = {
       raw: true,
     });
     return retweets;
-  }
+  },
 };

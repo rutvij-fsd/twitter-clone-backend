@@ -7,12 +7,23 @@ module.exports = {
     // query -> {userId}
     if (!req.query.userId)
       return res.status(400).json({ errors: 'userId is required' });
-
+      
+      const limitAsNumber = Number.parseInt(req.query.limit);
+      const pageAsNumber = Number.parseInt(req.query.page);
+   
+      let page =0;
+      if(!Number.isNaN(pageAsNumber) && pageAsNumber >0){
+       page = pageAsNumber;
+      }
+      let limit =10;
+      if(!Number.isNaN(limitAsNumber) && limitAsNumber >0 && limitAsNumber <10000){
+       limit = limitAsNumber;
+      }
     module.exports.getMyFollowing(req.query.userId).then((response) => {
       const following = [];
       response.forEach((el) => following.push(el.id));
       Promise.all([
-        module.exports.getTweets(following),
+        module.exports.getTweets(following,limit,page*limit),
         module.exports.getRetweets(following),
         module.exports.getLikes(following),
         getMyLikes(req.query.userId),
@@ -23,7 +34,8 @@ module.exports = {
         values[3].map((tweet) => likeSet.add(tweet.tweetId));
         values[4].map((tweet) => retweetSet.add(tweet.tweetId));
 
-        let tweets = values[0].concat(values[1]).concat(values[2]);
+        let tweets = values[0].rows.concat(values[1]).concat(values[2]);
+        let count = values[0].count;
         const uniqueSet = new Set();
         tweets = tweets.filter((tweet) => {
           if (uniqueSet.has(tweet["Tweets.id"])) return false;
@@ -41,7 +53,7 @@ module.exports = {
           return deepCopy;
         });
 
-        return res.status(200).json({ tweets: tweets });
+        return res.status(200).json({ tweets, count });
       });
     });
   },
@@ -78,8 +90,8 @@ module.exports = {
     });
     return users;
   },
-  getTweets: async (following) => {
-    const tweets = await User.findAll({
+  getTweets: async (following,limit,offset) => {
+    const tweets = await User.findAndCountAll({
       attributes: ["firstname", "lastname", "username", "avatar"],
       include: {
         model: Tweet,
@@ -91,8 +103,12 @@ module.exports = {
         },
       },
       raw: true,
+      offset: offset,
+      limit: limit,
+      subQuery: false,
     });
     return tweets;
+    
   },
   getRetweets: async (following) => {
     const tweetIds = `SELECT Tweets.id from Tweets INNER JOIN Retweets ON Tweets.id = Retweets.tweetId WHERE Retweets.userId IN (${
